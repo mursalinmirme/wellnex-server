@@ -31,6 +31,7 @@ async function run() {
     const campsCollection = client.db('wellnex').collection('camps');
     const UpCommingcampsCollection = client.db('wellnex').collection('upcomming_camps');
     const participantRatingsCollection = client.db('wellnex').collection('participant_ratings')
+    const wellnessBlogsCollection = client.db('wellnex').collection('wellness_blogs');
 
     // insert users registration data
     app.post('/users', async(req, res) => {
@@ -79,7 +80,11 @@ async function run() {
       res.send(result);
     })
 
-
+    // wellness blogs related
+    app.get('/wellness-blogs', async(req, res) => {
+      const result = await wellnessBlogsCollection.find().toArray();
+      res.send(result);
+    })
 
 
 
