@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
 
 console.log(process.env.USER_NAME);
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.USER_NAME}:${process.env.USER_PASSWORD}@mursalin.bxh3q56.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -28,6 +28,9 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const usersCollection = client.db('wellnex').collection('users');
+    const campsCollection = client.db('wellnex').collection('camps');
+    const UpCommingcampsCollection = client.db('wellnex').collection('upcomming_camps');
+    const participantRatingsCollection = client.db('wellnex').collection('participant_ratings')
 
     // insert users registration data
     app.post('/users', async(req, res) => {
@@ -36,6 +39,47 @@ async function run() {
 
         console.log(inserUser);
     })
+
+
+    // popular camps relate
+    // get camps
+    app.get('/popular-camps', async(req, res) => {
+      const popularCampsResult = await campsCollection.find().toArray();
+      res.send(popularCampsResult);
+    })
+    // single camps detalis
+    app.get('/camps-details/:id', async(req, res) => {
+      const campId = req.params;
+      console.log(campId);
+      const query = {_id: new ObjectId(campId)}
+      const findCampResult = await campsCollection.findOne(query);
+      res.send(findCampResult)
+    } )
+
+
+    // ratting related api
+    // participant ratings
+    app.get('/participants_ratings', async(req, res) => {
+      const result = await participantRatingsCollection.find().toArray();
+      res.send(result);
+    })
+
+
+    // upcomming camps related
+
+    app.get('/upcomming-camps', async(req, res) => {
+      const result = await UpCommingcampsCollection.find().toArray();
+      res.send(result);
+    })
+
+
+    // all available camps
+    app.get('/all_camps', async(req, res) => {
+      const result = await campsCollection.find().toArray();
+      res.send(result);
+    })
+
+
 
 
 
