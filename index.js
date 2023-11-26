@@ -11,7 +11,6 @@ app.get('/', (req, res) => {
     res.send('The Wellnex server is running.....');
 })
 
-console.log(process.env.USER_NAME);
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.USER_NAME}:${process.env.USER_PASSWORD}@mursalin.bxh3q56.mongodb.net/?retryWrites=true&w=majority`;
@@ -94,8 +93,19 @@ async function run() {
       res.send(result);
     })
 
+    // search camps
+    app.get('/search-camps', async(req, res) => {
+      console.log('someone hitting this routes');
+      const get = req.query;
+      console.log(get);
+    })
 
-
+    // current user role
+    app.get('/user/:email', async(req, res) => {
+      const query = req.params;
+      const findUser = await usersCollection.findOne(query);
+      res.send({userRole: findUser?.role});
+    })
 
 
     client.db("admin").command({ ping: 1 });
