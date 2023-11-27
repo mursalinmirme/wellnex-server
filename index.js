@@ -141,8 +141,9 @@ async function run() {
 
     // organizers camps delete 
     app.delete('/organizers-camps/:id', async(req, res) => {
-      const deleteId = req.params.id;
-      const result = await campsCollection.deleteOne({_id: new ObjectId(deleteId)});
+      const deleteId = req.params;
+      console.log(deleteId);
+      const result = await campsCollection.deleteOne({_id: new ObjectId(deleteId.id)});
       res.send(result);
     })
 
@@ -153,6 +154,19 @@ async function run() {
       const result = await campsCollection.findOne({_id: new ObjectId(campId)});
       console.log(result);
       res.send(result);
+    })
+
+    app.put('/organizers-camps/:id', async(req, res) => {
+      const updateId = req.params;
+      const updateInfo = req.body;
+      console.log(updateId);
+      const filter = {_id: new ObjectId(updateId)};
+      const option = { upsert: true }
+      const updateDoc = {
+        $set: updateInfo
+      }
+      const result = await campsCollection.updateOne(filter, updateDoc, option)
+      res.send(result)
     })
 
 
