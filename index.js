@@ -51,7 +51,6 @@ async function run() {
     // single camps detalis
     app.get('/camps-details/:id', async(req, res) => {
       const campId = req.params;
-      console.log(campId);
       const query = {_id: new ObjectId(campId)}
       const findCampResult = await campsCollection.findOne(query);
       res.send(findCampResult)
@@ -97,7 +96,6 @@ async function run() {
     app.get('/search-camps', async(req, res) => {
       console.log('someone hitting this routes');
       const get = req.query;
-      console.log(get);
     })
 
     // current user role
@@ -133,6 +131,30 @@ async function run() {
        const result = await campsCollection.insertOne(getnewcamp);
        res.send(result);
     })
+
+    // organizers saved camps
+    app.get('/organizers-camps', async(req, res) => {
+      const query = req.query;
+      const result = await campsCollection.find({campOwnerEmail: query?.email}).toArray();
+      res.send(result)
+    })
+
+    // organizers camps delete 
+    app.delete('/organizers-camps/:id', async(req, res) => {
+      const deleteId = req.params.id;
+      const result = await campsCollection.deleteOne({_id: new ObjectId(deleteId)});
+      res.send(result);
+    })
+
+    // get organizers update camps details
+    app.get('/organizers-camps/:id', async(req, res) => {
+      const campId = req.params.id;
+      console.log(campId);
+      const result = await campsCollection.findOne({_id: new ObjectId(campId)});
+      console.log(result);
+      res.send(result);
+    })
+
 
     client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
