@@ -107,6 +107,28 @@ async function run() {
       res.send({userRole: findUser?.role});
     })
 
+    // organizer data get
+    app.get('/organizer', async(req, res) => {
+      const query = req.query;
+      const result = await usersCollection.findOne(query);
+      res.send(result)
+    })
+
+    // update organizer information
+    app.put('/organizer/:email', async(req, res) => {
+      const updateEmail = req.params;
+      const updateInfo = req.body;
+      const filter = {email: updateEmail?.email};
+      const option = { upsert: true }
+      const updateDoc = {
+        $set: updateInfo
+      }
+      const result = await usersCollection.updateOne(filter, updateDoc, option)
+      console.log(updateEmail, updateInfo);
+      res.send(result)
+    })
+
+
 
     client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
