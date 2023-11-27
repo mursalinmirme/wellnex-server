@@ -124,11 +124,15 @@ async function run() {
         $set: updateInfo
       }
       const result = await usersCollection.updateOne(filter, updateDoc, option)
-      console.log(updateEmail, updateInfo);
       res.send(result)
     })
 
-
+    // organizer add a new camp post
+    app.post('/add-a-camp', async(req, res) => {
+       const getnewcamp = req.body;
+       const result = await campsCollection.insertOne(getnewcamp);
+       res.send(result);
+    })
 
     client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
