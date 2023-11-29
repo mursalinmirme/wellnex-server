@@ -39,12 +39,27 @@ async function run() {
     const reviewCollection = client.db('wellnex').collection('reviews');
 
 
+    // custom middlewares
+    const verifyToken = (req, res, next) => {
+        const token = req.headers.token;
+        if(!token){
+          return res.status(401).send({msg: 'Unauthorized access'});
+        }
+        jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+          if(err){
+           return res.status(401).send({msg: 'Unauthorized'})
+          }
+          req.decoded = decoded;
+          next();
+        })
+    }
+
+console.log('secret key is', process.env.SECRET_KEY);
     // generate a token
     app.post('/jwt', async(req, res) => {
        const email = req.body;
        console.log(email);
        const token = jwt.sign(email, process.env.SECRET_KEY, {expiresIn: '90d'});
-       console.log('token is',token);
        res.send({token: token});
     })
 
@@ -62,11 +77,11 @@ async function run() {
     // popular camps relate
     // get camps
     app.get('/popular-camps', async(req, res) => {
-      const popularCampsResult = await campsCollection.find().toArray();
+      const popularCampsResult = await campsCollection.find().sort({total_participants: -1}).skip(0).limit(6).toArray();
       res.send(popularCampsResult);
     })
     // single camps detalis
-    app.get('/camps-details/:id', async(req, res) => {
+    app.get('/camps-details/:id', verifyToken, async(req, res) => {
       const campId = req.params;
       const query = {_id: new ObjectId(campId)}
       const findCampResult = await campsCollection.findOne(query);
@@ -91,8 +106,8 @@ async function run() {
 
 
     // all available camps
-    app.get('/all_camps', async(req, res) => {
-      const result = await campsCollection.find().toArray();
+    app.get('/all_camps', verifyToken, async(req, res) => {
+      const result = await campsCollection.find().sort({total_participants: -1}).toArray();
       res.send(result);
     })
 
@@ -103,10 +118,16 @@ async function run() {
     })
 
     // registrations camps api
-    app.post('/join-camp-reg', async(req, res) => {
+    app.post('/join-camp-reg', verifyToken, async(req, res) => {
       const getJoinData = req.body;
       const result = await joinCampRegCollection.insertOne(getJoinData);
-      res.send(result);
+
+      const getRegCamp = getJoinData.campInfo.camp_id;
+
+      const getTotalParticipant = await campsCollection.findOne({_id: new ObjectId(getRegCamp)}, {projection: {total_participants: 1}});
+
+      const updateTotalParticipant = await campsCollection.updateOne({_id: new ObjectId(getRegCamp)}, {$set: {total_participants: getTotalParticipant.total_participants + 1}})
+      res.send(updateTotalParticipant);
     })
 
     // search camps
@@ -150,7 +171,7 @@ async function run() {
     })
 
     // organizers saved camps
-    app.get('/organizers-camps', async(req, res) => {
+    app.get('/organizers-camps', verifyToken, async(req, res) => {
       const query = req.query;
       const result = await campsCollection.find({campOwnerEmail: query?.email}).toArray();
       res.send(result)
@@ -217,7 +238,7 @@ async function run() {
     })
 
     // participant dahboard related routes
-    app.get(`/participant-registered-camps`, async(req, res) => {
+    app.get(`/participant-registered-camps`, verifyToken, async(req, res) => {
       const participantEmail = req.query?.email;
       // console.log('orga ni zer is', organizerEmail);
       const option = {
@@ -246,7 +267,7 @@ async function run() {
 
 
     // payment card details get
-    app.get('/cart-camp-details/:id', async(req, res) => {
+    app.get('/cart-camp-details/:id', verifyToken, async(req, res) => {
       const detilsId = req.params.id;
       // console.log(detilsId);
       const result = await joinCampRegCollection.findOne({_id: new ObjectId(detilsId)});
@@ -269,7 +290,7 @@ async function run() {
     })
 
     // get perticipant payment list
-    app.get('/participant-payment-history', async(req, res) => {
+    app.get('/participant-payment-history', verifyToken, async(req, res) => {
         const partiEmail = req.query;
         const option = {
           sort: {_id: 1},
@@ -280,7 +301,7 @@ async function run() {
     })
 
     // get all paid camps of a specific user for only paid registered camps
-    app.get('/participants-reviewable-camps', async(req, res) => {
+    app.get('/participants-reviewable-camps', verifyToken, async(req, res) => {
       const {email} = req.query;
       const result = await joinCampRegCollection.find({participantEmail: email, payment_status: 'paid', confirmation_stauts: 'Confirmed'}).toArray();
       res.send(result);
