@@ -264,6 +264,21 @@ async function run() {
         res.send(result);
     })
 
+    // get all paid camps of a specific user for only paid registered camps
+    app.get('/participants-reviewable-camps', async(req, res) => {
+      const {email} = req.query;
+      console.log('I got reviewabse camps email:', email);
+      const result = await joinCampRegCollection.find({participantEmail: email, payment_status: 'paid', confirmation_stauts: 'Confirmed'}).toArray();
+      console.log('Mr Rahat got', result);
+      res.send(result);
+    })
+
+
+
+
+
+
+
 
     client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
