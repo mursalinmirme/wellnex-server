@@ -2,9 +2,12 @@ const express = require('express');
 const app = express();
 require('dotenv').config()
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const stripe = require("stripe")(process.env.STRIP_SECRET_API);
 const port = process.env.PORT || 5000;
-app.use(cors())
+app.use(cors({
+  
+}))
 app.use(express.json())
 
 
@@ -30,10 +33,22 @@ async function run() {
     const usersCollection = client.db('wellnex').collection('users');
     const campsCollection = client.db('wellnex').collection('camps');
     const UpCommingcampsCollection = client.db('wellnex').collection('upcomming_camps');
-    const participantRatingsCollection = client.db('wellnex').collection('participant_ratings')
     const wellnessBlogsCollection = client.db('wellnex').collection('wellness_blogs');
     const joinCampRegCollection = client.db('wellnex').collection('join_camp_registrations');
     const paymentCollection = client.db('wellnex').collection('payments');
+    const reviewCollection = client.db('wellnex').collection('reviews');
+
+
+    // generate a token
+    app.post('/jwt', async(req, res) => {
+       const email = req.body;
+       console.log(email);
+       const token = jwt.sign(email, process.env.SECRET_KEY, {expiresIn: '90d'});
+       console.log('token is',token);
+       res.send({token: token});
+    })
+
+
 
     // insert users registration data
     app.post('/users', async(req, res) => {
@@ -62,7 +77,7 @@ async function run() {
     // ratting related api
     // participant ratings
     app.get('/participants_ratings', async(req, res) => {
-      const result = await participantRatingsCollection.find().toArray();
+      const result = await reviewCollection.find().toArray();
       res.send(result);
     })
 
@@ -115,7 +130,7 @@ async function run() {
     })
 
     // update organizer information
-    app.put('/organizer/:email', async(req, res) => {
+    app.put('/users/:email', async(req, res) => {
       const updateEmail = req.params;
       const updateInfo = req.body;
       const filter = {email: updateEmail?.email};
@@ -267,12 +282,43 @@ async function run() {
     // get all paid camps of a specific user for only paid registered camps
     app.get('/participants-reviewable-camps', async(req, res) => {
       const {email} = req.query;
-      console.log('I got reviewabse camps email:', email);
       const result = await joinCampRegCollection.find({participantEmail: email, payment_status: 'paid', confirmation_stauts: 'Confirmed'}).toArray();
-      console.log('Mr Rahat got', result);
       res.send(result);
     })
 
+    // get camp name 
+    app.get('/review-cam-name/:id', async(req, res) => {
+       const objId = req.params.id;
+       const result = await joinCampRegCollection.findOne({_id: new ObjectId(objId)}, {projection: {'campInfo.camp_name': 1}});
+       res.send(result)
+    })
+
+    // give perticipant review
+    app.post('/participant-review', async(req, res) => {
+      const newReview = req.body;
+      const result = await reviewCollection.insertOne(newReview);
+      console.log(newReview);
+      res.send(result);
+    })
+
+    // update professionals medical specility
+    app.put('/update-medical-specility', async(req, res) => {
+      const updateEmail = req.query.email;
+      const value = req.body.specility;
+      console.log(updateEmail, value);
+      const result = await usersCollection.updateOne({email: updateEmail}, {$set: {specility: value}})
+      res.send(result);
+    })
+    // update professionals medical specility
+    app.put('/upload-certificate', async(req, res) => {
+      const updateEmail = req.query.email;
+      const value = req.body.certificateImg;
+      console.log(updateEmail, value);
+      const result = await usersCollection.updateOne({email: updateEmail}, {$set: {certificateImg: value}})
+      res.send(result);
+    })
+
+    
 
 
 
