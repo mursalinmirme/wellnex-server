@@ -281,11 +281,26 @@ async function run() {
         res.send({operatonStatus: 'success'})
       }
     })
+    // confiremed participant registrantion update
+    app.patch('/professional-acceptions/:id', async(req, res) => {
+      const regId = req.params.id;
+      const result = await professionalInterestCollection.findOneAndUpdate({_id: new ObjectId(regId)}, {$set: {status:'Confirmed'}}, {new: true});
+      console.log(result);
+      if(result){
+        res.send({operatonStatus: 'success'})
+      }
+    })
 
     // organizers can delete participant registration
     app.delete('/participant-register-camp/:id', async(req, res) => {
       const deleteId = req.params;
       const result = await joinCampRegCollection.deleteOne({_id: new ObjectId(deleteId.id)});
+      res.send(result);
+    })
+    // organizers can delete upcomming camps
+    app.delete('/upcomming-camp-Delete/:id', async(req, res) => {
+      const deleteId = req.params;
+      const result = await UpCommingcampsCollection.deleteOne({_id: new ObjectId(deleteId.id)});
       res.send(result);
     })
 
@@ -397,6 +412,17 @@ async function run() {
       const result = await upcommingCampRegCollection.find({'campInfo.camp_id': getUpCampsId}).toArray();
       res.send(result);
     })
+
+    // updateAcceptance upcomming camps
+    app.put('/upcomming-camps-under-participants/:id', async(req, res) => {
+      const getUpCampsId = req.params.id;
+      // const result = await upcommingCampRegCollection.find({'campInfo.camp_id': getUpCampsId}).toArray();
+      // res.send(result);
+    })
+
+
+
+
     // get a specific perticipents registrations under a camp
     app.get('/upcomming-camps-under-professionals/:id', async(req, res) => {
       const profId = req.params.id;
@@ -410,9 +436,13 @@ async function run() {
       const result = await professionalInterestCollection.find({professionalEmail: professionalEmail}).toArray();
       res.send(result)
     })
-
-
-
+    // get update upcomming camps data
+    app.get('/upcomming-camps-get/:id', async(req, res) => {
+      const getId = req.params.id;
+      const result = await UpCommingcampsCollection.findOne({_id: new ObjectId(getId)});
+      console.log(result);
+      res.send(result);
+    })
 
 
     client.db("admin").command({ ping: 1 });
