@@ -37,6 +37,9 @@ async function run() {
     const joinCampRegCollection = client.db('wellnex').collection('join_camp_registrations');
     const paymentCollection = client.db('wellnex').collection('payments');
     const reviewCollection = client.db('wellnex').collection('reviews');
+    const bannersCollection = client.db('wellnex').collection('banners');
+    const upcommingCampRegCollection = client.db('wellnex').collection('upcommingCampRegistrations');
+    const professionalInterestCollection = client.db('wellnex').collection('professionalsInterset');
 
 
     // custom middlewares
@@ -54,7 +57,6 @@ async function run() {
         })
     }
 
-console.log('secret key is', process.env.SECRET_KEY);
     // generate a token
     app.post('/jwt', async(req, res) => {
        const email = req.body;
@@ -63,6 +65,10 @@ console.log('secret key is', process.env.SECRET_KEY);
        res.send({token: token});
     })
 
+    app.get('/banners', async(req, res) => {
+       const result = await bannersCollection.find().toArray();
+       res.send(result);
+    })
 
 
     // insert users registration data
@@ -87,6 +93,13 @@ console.log('secret key is', process.env.SECRET_KEY);
       const findCampResult = await campsCollection.findOne(query);
       res.send(findCampResult)
     } )
+    // upcomming camp details camps detalis
+    app.get('/upcomming-camps-details/:id', verifyToken, async(req, res) => {
+      const campId = req.params;
+      const query = {_id: new ObjectId(campId)}
+      const findCampResult = await UpCommingcampsCollection.findOne(query);
+      res.send(findCampResult)
+    } )
 
 
     // ratting related api
@@ -100,14 +113,14 @@ console.log('secret key is', process.env.SECRET_KEY);
     // upcomming camps related
 
     app.get('/upcomming-camps', async(req, res) => {
-      const result = await UpCommingcampsCollection.find().toArray();
+      const result = await UpCommingcampsCollection.find().sort({_id: -1}).toArray();
       res.send(result);
     })
 
 
     // all available camps
     app.get('/all_camps', verifyToken, async(req, res) => {
-      const result = await campsCollection.find().sort({total_participants: -1}).toArray();
+      const result = await campsCollection.find().sort({_id: -1}).toArray();
       res.send(result);
     })
 
@@ -127,6 +140,30 @@ console.log('secret key is', process.env.SECRET_KEY);
       const getTotalParticipant = await campsCollection.findOne({_id: new ObjectId(getRegCamp)}, {projection: {total_participants: 1}});
 
       const updateTotalParticipant = await campsCollection.updateOne({_id: new ObjectId(getRegCamp)}, {$set: {total_participants: getTotalParticipant.total_participants + 1}})
+      res.send(updateTotalParticipant);
+    })
+    // registrations up comming camps api
+    app.post('/join-upcomming-camp-reg', verifyToken, async(req, res) => {
+      const getJoinData = req.body;
+      const result = await upcommingCampRegCollection.insertOne(getJoinData);
+
+      const getRegCamp = getJoinData.campInfo.camp_id;
+
+      const getTotalParticipant = await UpCommingcampsCollection.findOne({_id: new ObjectId(getRegCamp)}, {projection: {total_participants: 1}});
+
+      const updateTotalParticipant = await UpCommingcampsCollection.updateOne({_id: new ObjectId(getRegCamp)}, {$set: {total_participants: getTotalParticipant.total_participants + 1}})
+      res.send(updateTotalParticipant);
+    })
+    // parofessional interest submission for up comming camps api
+    app.post('/professionall-interest-submit-upcomming', verifyToken, async(req, res) => {
+      const getJoinData = req.body;
+      const result = await professionalInterestCollection.insertOne(getJoinData);
+
+      const getRegCamp = getJoinData.campInfo.camp_id;
+
+      const getTotalInterest = await UpCommingcampsCollection.findOne({_id: new ObjectId(getRegCamp)}, {projection: {total_interests: 1}});
+
+      const updateTotalParticipant = await UpCommingcampsCollection.updateOne({_id: new ObjectId(getRegCamp)}, {$set: {total_interests: getTotalInterest.total_interests + 1}})
       res.send(updateTotalParticipant);
     })
 
@@ -167,6 +204,12 @@ console.log('secret key is', process.env.SECRET_KEY);
     app.post('/add-a-camp', async(req, res) => {
        const getnewcamp = req.body;
        const result = await campsCollection.insertOne(getnewcamp);
+       res.send(result);
+    })
+    // organizer add a new upcomming camp post
+    app.post('/add-a-upcomming-camp', async(req, res) => {
+       const getnewcamp = req.body;
+       const result = await UpCommingcampsCollection.insertOne(getnewcamp);
        res.send(result);
     })
 
@@ -216,6 +259,15 @@ console.log('secret key is', process.env.SECRET_KEY);
         projection: { _id:1, 'campInfo.camp_name':1, 'campInfo.scheduled_date_time':1, 'campInfo.venue_location':1,'campInfo.camp_fees':1, payment_status:1, confirmation_stauts:1, }
       }
       const result = await joinCampRegCollection.find({'campInfo.camp_owner': organizerEmail}, option).toArray();
+      // console.log('Mr Rahat got', result);
+      res.send(result);
+    })
+
+    // get all registration under a organizer
+    app.get(`/get-upcomming-camps-under-organizer`, async(req, res) => {
+      const organizerEmail = req.query?.email;
+      // console.log('orga ni zer is', organizerEmail);
+      const result = await UpCommingcampsCollection.find({campOwnerEmail: organizerEmail}).toArray();
       // console.log('Mr Rahat got', result);
       res.send(result);
     })
