@@ -391,9 +391,25 @@ async function run() {
       res.send(result);
     })
 
-    
+    // get a specific perticipents registrations under a camp
+    app.get('/upcomming-camps-under-participants/:id', async(req, res) => {
+      const getUpCampsId = req.params.id;
+      const result = await upcommingCampRegCollection.find({'campInfo.camp_id': getUpCampsId}).toArray();
+      res.send(result);
+    })
+    // get a specific perticipents registrations under a camp
+    app.get('/upcomming-camps-under-professionals/:id', async(req, res) => {
+      const profId = req.params.id;
+      const result = await professionalInterestCollection.find({'campInfo.camp_id': profId}).toArray();
+      res.send(result);
+    })
 
-
+    app.get('/professionals-requesting', async(req, res) => {
+      const professionalEmail = req.query.email;
+      console.log('hahahah', professionalEmail);
+      const result = await professionalInterestCollection.find({professionalEmail: professionalEmail}).toArray();
+      res.send(result)
+    })
 
 
 
