@@ -60,7 +60,6 @@ async function run() {
     // generate a token
     app.post('/jwt', async(req, res) => {
        const email = req.body;
-       console.log(email);
        const token = jwt.sign(email, process.env.SECRET_KEY, {expiresIn: '90d'});
        res.send({token: token});
     })
@@ -75,8 +74,7 @@ async function run() {
     app.post('/users', async(req, res) => {
         const usersData = req.body;
         const inserUser = await usersCollection.insertOne(usersData);
-
-        console.log(inserUser);
+        res.send(inserUser);
     })
 
 
@@ -105,7 +103,7 @@ async function run() {
     // ratting related api
     // participant ratings
     app.get('/participants_ratings', async(req, res) => {
-      const result = await reviewCollection.find().toArray();
+      const result = await reviewCollection.find().sort({_id: -1}).toArray();
       res.send(result);
     })
 
@@ -169,7 +167,6 @@ async function run() {
 
     // search camps
     app.get('/search-camps', async(req, res) => {
-      console.log('someone hitting this routes');
       const get = req.query;
     })
 
@@ -223,7 +220,6 @@ async function run() {
     // organizers camps delete 
     app.delete('/organizers-camps/:id', async(req, res) => {
       const deleteId = req.params;
-      console.log(deleteId);
       const result = await campsCollection.deleteOne({_id: new ObjectId(deleteId.id)});
       res.send(result);
     })
@@ -231,16 +227,13 @@ async function run() {
     // get organizers update camps details
     app.get('/organizers-camps/:id', async(req, res) => {
       const campId = req.params.id;
-      console.log(campId);
       const result = await campsCollection.findOne({_id: new ObjectId(campId)});
-      console.log(result);
       res.send(result);
     })
     // update camps
     app.put('/organizers-camps/:id', async(req, res) => {
       const updateId = req.params;
       const updateInfo = req.body;
-      console.log(updateId);
       const filter = {_id: new ObjectId(updateId)};
       const option = { upsert: true }
       const updateDoc = {
@@ -259,16 +252,13 @@ async function run() {
         projection: { _id:1, 'campInfo.camp_name':1, 'campInfo.scheduled_date_time':1, 'campInfo.venue_location':1,'campInfo.camp_fees':1, payment_status:1, confirmation_stauts:1, }
       }
       const result = await joinCampRegCollection.find({'campInfo.camp_owner': organizerEmail}, option).toArray();
-      // console.log('Mr Rahat got', result);
       res.send(result);
     })
 
     // get all registration under a organizer
     app.get(`/get-upcomming-camps-under-organizer`, async(req, res) => {
       const organizerEmail = req.query?.email;
-      // console.log('orga ni zer is', organizerEmail);
       const result = await UpCommingcampsCollection.find({campOwnerEmail: organizerEmail}).toArray();
-      // console.log('Mr Rahat got', result);
       res.send(result);
     })
 
@@ -276,7 +266,6 @@ async function run() {
     app.patch('/payment-status/:id', async(req, res) => {
       const regId = req.params.id;
       const result = await joinCampRegCollection.findOneAndUpdate({_id: new ObjectId(regId)}, {$set: {confirmation_stauts:'Confirmed'}}, {new: true});
-      console.log(result);
       if(result){
         res.send({operatonStatus: 'success'})
       }
@@ -285,7 +274,6 @@ async function run() {
     app.patch('/professional-acceptions/:id', async(req, res) => {
       const regId = req.params.id;
       const result = await professionalInterestCollection.findOneAndUpdate({_id: new ObjectId(regId)}, {$set: {status:'Confirmed'}}, {new: true});
-      console.log(result);
       if(result){
         res.send({operatonStatus: 'success'})
       }
@@ -336,9 +324,7 @@ async function run() {
     // payment card details get
     app.get('/cart-camp-details/:id', verifyToken, async(req, res) => {
       const detilsId = req.params.id;
-      // console.log(detilsId);
       const result = await joinCampRegCollection.findOne({_id: new ObjectId(detilsId)});
-      // console.log(result);
       res.send(result);
     })
 
@@ -385,7 +371,6 @@ async function run() {
     app.post('/participant-review', async(req, res) => {
       const newReview = req.body;
       const result = await reviewCollection.insertOne(newReview);
-      console.log(newReview);
       res.send(result);
     })
 
@@ -393,7 +378,6 @@ async function run() {
     app.put('/update-medical-specility', async(req, res) => {
       const updateEmail = req.query.email;
       const value = req.body.specility;
-      console.log(updateEmail, value);
       const result = await usersCollection.updateOne({email: updateEmail}, {$set: {specility: value}})
       res.send(result);
     })
@@ -401,7 +385,6 @@ async function run() {
     app.put('/upload-certificate', async(req, res) => {
       const updateEmail = req.query.email;
       const value = req.body.certificateImg;
-      console.log(updateEmail, value);
       const result = await usersCollection.updateOne({email: updateEmail}, {$set: {certificateImg: value}})
       res.send(result);
     })
@@ -432,7 +415,6 @@ async function run() {
 
     app.get('/professionals-requesting', async(req, res) => {
       const professionalEmail = req.query.email;
-      console.log('hahahah', professionalEmail);
       const result = await professionalInterestCollection.find({professionalEmail: professionalEmail}).toArray();
       res.send(result)
     })
@@ -440,7 +422,6 @@ async function run() {
     app.get('/upcomming-camps-get/:id', async(req, res) => {
       const getId = req.params.id;
       const result = await UpCommingcampsCollection.findOne({_id: new ObjectId(getId)});
-      console.log(result);
       res.send(result);
     })
 
