@@ -124,7 +124,14 @@ async function run() {
 
     // wellness blogs related
     app.get('/wellness-blogs', async(req, res) => {
-      const result = await wellnessBlogsCollection.find().toArray();
+      const result = await wellnessBlogsCollection.find().sort({_id: -1}).toArray();
+      res.send(result);
+    })
+
+    // wellness blogs related get specific blog
+    app.get('/wellness-blogs/:id', async(req, res) => {
+      const id = req.params;
+      const result = await wellnessBlogsCollection.findOne({_id: new ObjectId(id.id)});
       res.send(result);
     })
 
@@ -203,6 +210,23 @@ async function run() {
        const result = await campsCollection.insertOne(getnewcamp);
        res.send(result);
     })
+    // add a now blog
+    app.post('/add-a-blog', async(req, res) => {
+       const getnewBlog = req.body;
+       const result = await wellnessBlogsCollection.insertOne(getnewBlog);
+       res.send(result);
+    })
+    // update a blog
+    app.put('/update-blog', async(req, res) => {
+       const getUpdateBlog = req.body;
+       const id = req.query.id;
+       const updateDoc = {
+        $set: getUpdateBlog
+      };
+       const result = await wellnessBlogsCollection.updateOne({_id: new ObjectId(id)}, updateDoc);
+       res.send(result);
+    })
+
     // organizer add a new upcomming camp post
     app.post('/add-a-upcomming-camp', async(req, res) => {
        const getnewcamp = req.body;
@@ -222,6 +246,14 @@ async function run() {
       const deleteId = req.params;
       const result = await campsCollection.deleteOne({_id: new ObjectId(deleteId.id)});
       res.send(result);
+    })
+
+    // organizers camps delete 
+    app.delete('/delete-blog/:id', async(req, res) => {
+      const deleteId = req.params.id;
+      const result = await wellnessBlogsCollection.deleteOne({_id: new ObjectId(deleteId)});
+      res.send(result);
+      console.log(deleteId);
     })
 
     // get organizers update camps details
@@ -422,6 +454,30 @@ async function run() {
     app.get('/upcomming-camps-get/:id', async(req, res) => {
       const getId = req.params.id;
       const result = await UpCommingcampsCollection.findOne({_id: new ObjectId(getId)});
+      res.send(result);
+    })
+
+    // manage users
+    app.get('/all-users', verifyToken, async(req, res) => {
+      const email = req.query.email;
+      const decoded = req.decoded.email;
+      if(email !== decoded){
+        res.status(403).send({msg: 'auautorized access'})
+      }
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    })
+
+    // make admin
+    app.put('/make-admin', async(req, res) => {
+      const userId = req.body.id;
+      console.log(userId);
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        },
+      };
+      const result = await usersCollection.updateOne({_id: new ObjectId(userId)}, updateDoc);
       res.send(result);
     })
 
